@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Instalação do dbt-core + adaptador PostgreSQL + pacotes de qualidade
 RUN pip install --no-cache-dir \
-    dbt-core==1.9.2 \
-    dbt-postgres==1.9.2 \
+    dbt-core==1.9.1 \
+    dbt-postgres==1.9.1 \
     dbt-utils==1.3.0 \
     dbt-expectations==0.10.4 \
     elementary-data==0.16.3

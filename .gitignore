@@ -5,12 +5,29 @@ dbt_project/logs/
 
 # Env
 .env
+.env.*
+!.env.example
 
 # Docker volumes
 docker/airflow/logs/
+docker/postgres/data/
+docker/superset/data/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 .venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSH keys (nunca versionar)
+*.pem
+*.key
