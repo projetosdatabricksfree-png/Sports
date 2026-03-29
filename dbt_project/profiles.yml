@@ -1,0 +1,26 @@
+dataplatform:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER', 'admin') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'admin') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'dataplatform') }}"
+      schema: staging
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+
+    prod:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST_PROD') }}"
+      port: "{{ env_var('POSTGRES_PORT_PROD', '5432') | int }}"
+      user: "{{ env_var('POSTGRES_USER_PROD') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD_PROD') }}"
+      dbname: "{{ env_var('POSTGRES_DB_PROD', 'dataplatform') }}"
+      schema: staging
+      threads: 8
+      keepalives_idle: 0
+      connect_timeout: 10

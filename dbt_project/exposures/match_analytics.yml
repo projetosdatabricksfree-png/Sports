@@ -1,0 +1,30 @@
+version: 2
+
+exposures:
+  - name: match_dashboard
+    type: dashboard
+    maturity: high
+    url: http://localhost:8088/superset/dashboard/match-analytics
+    description: >
+      Dashboard de performance de times e partidas.
+      Alimentado por fct_match_predictions e fct_team_season_stats.
+    depends_on:
+      - ref('fct_match_predictions')
+      - ref('fct_team_season_stats')
+      - ref('dim_team')
+    owner:
+      name: Diego Oliveira
+      email: admin@dataplatform.com
+
+  - name: airflow_dbt_pipeline
+    type: application
+    maturity: high
+    description: >
+      Pipeline Airflow que orquestra o build completo do projeto dbt.
+      DAG: dbt_pipeline, schedule: diário 06h.
+    depends_on:
+      - ref('fct_match_predictions')
+      - ref('fct_team_season_stats')
+    owner:
+      name: Diego Oliveira
+      email: admin@dataplatform.com

@@ -1,0 +1,52 @@
+version: 2
+
+models:
+  - name: stg_matches
+    description: >
+      Partidas padronizadas a partir de raw.matches.
+      Cast explícito em todas as colunas. Sem joins. Grain: uma linha por partida.
+    columns:
+      - name: match_id
+        description: "PK — identificador único da partida."
+        data_tests:
+          - not_null
+          - unique
+      - name: match_date
+        description: "Data da partida (DATE)."
+        data_tests:
+          - not_null
+      - name: home_goals
+        description: "Gols do time mandante."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: away_goals
+        description: "Gols do time visitante."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: match_result
+        description: "Resultado calculado: HOME_WIN | AWAY_WIN | DRAW"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['HOME_WIN', 'AWAY_WIN', 'DRAW']
+
+  - name: stg_teams
+    description: >
+      Times padronizados a partir de raw.teams.
+      Grain: uma linha por time.
+    columns:
+      - name: team_id
+        description: "PK — identificador único do time."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_name
+        description: "Nome oficial do time."
+        data_tests:
+          - not_null

@@ -1,0 +1,91 @@
+version: 2
+
+models:
+  - name: dim_team
+    description: >
+      Dimensão de times. Grain: uma linha por time.
+      Surrogate key gerada via dbt_utils.generate_surrogate_key.
+    columns:
+      - name: team_sk
+        description: "Surrogate key do time."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_id
+        description: "NK — identificador natural do time."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_name
+        data_tests:
+          - not_null
+
+  - name: fct_team_season_stats
+    description: >
+      Estatísticas agregadas por time e temporada (ano).
+      Grain: uma linha por time por temporada.
+    columns:
+      - name: stat_sk
+        description: "Surrogate key composta de team_id + season."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_id
+      - name: total_matches
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: win_rate
+        description: "Taxa de vitórias entre 0 e 1."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+  - name: fct_match_predictions
+    description: >
+      Fato de partidas enriquecido com form index de ambos os times.
+      Grain: uma linha por partida. Incremental por match_date.
+    columns:
+      - name: match_id
+        description: "PK — identificador único da partida."
+        data_tests:
+          - not_null
+          - unique
+      - name: match_date
+        data_tests:
+          - not_null
+      - name: home_team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_id
+      - name: away_team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team')
+              field: team_id
+      - name: match_result
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['HOME_WIN', 'AWAY_WIN', 'DRAW']
+      - name: home_goals
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: away_goals
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30

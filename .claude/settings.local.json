@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker --version)",
+      "Bash(docker-compose --version)",
+      "Bash(dpkg -l)",
+      "Bash(snap list:*)",
+      "Bash(lsb_release -a)",
+      "Bash(sudo systemctl:*)",
+      "Bash(sudo apt-get:*)",
+      "Bash(sudo -S systemctl stop docker docker.socket containerd)",
+      "Bash(sudo -S apt-get remove -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-compose docker.io docker-doc docker-compose-v2 podman-docker python3-docker python3-dockerpty python3-compose)",
+      "Bash(sudo -S apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras)",
+      "Bash(sudo -S apt-get autoremove -y)",
+      "Bash(sudo -S rm -rf /var/lib/docker /var/lib/containerd /etc/docker /etc/apt/sources.list.d/docker* /etc/apt/keyrings/docker* ~/.docker)",
+      "Bash(sudo -S apt-get update -y)",
+      "Bash(sudo -S apt-get install -y ca-certificates curl gnupg)",
+      "Bash(sudo -S install -m 0755 -d /etc/apt/keyrings)",
+      "Bash(curl -fsSL https://download.docker.com/linux/ubuntu/gpg)",
+      "Bash(sudo -S tee /etc/apt/keyrings/docker.asc)",
+      "Bash(sudo -S chmod a+r /etc/apt/keyrings/docker.asc)",
+      "Bash(sudo -S tee /etc/apt/sources.list.d/docker.list)",
+      "Bash(sudo -S apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin)",
+      "Bash(curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /tmp/docker.gpg)",
+      "Bash(sudo -S cp /tmp/docker.gpg /etc/apt/keyrings/docker.asc)"
+    ]
+  }
+}

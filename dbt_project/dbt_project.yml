@@ -1,0 +1,49 @@
+name: 'dataplatform'
+version: '1.0.0'
+config-version: 2
+
+profile: 'dataplatform'
+
+# Diretórios do projeto
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Diretório de output compilado
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# ─── Materialização por camada (conforme guideline) ───────────────────────────
+models:
+  dataplatform:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: ephemeral
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+      +post-hook:
+        - "ANALYZE {{ this }}"
+
+# ─── Seeds ────────────────────────────────────────────────────────────────────
+seeds:
+  dataplatform:
+    +schema: raw
+
+# ─── Snapshots ────────────────────────────────────────────────────────────────
+snapshots:
+  dataplatform:
+    +target_schema: snapshots
+
+# ─── Variáveis globais ────────────────────────────────────────────────────────
+vars:
+  dataplatform:
+    freshness_warn_hours: 12
+    freshness_error_hours: 24
+    rolling_window: 5

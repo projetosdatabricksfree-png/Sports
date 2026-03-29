@@ -1,0 +1,61 @@
+version: 2
+
+# =============================================================================
+# Testes Unitários — stg_matches (dbt 1.9 native unit tests)
+# Valida a lógica de transformação sem depender do banco real
+# =============================================================================
+unit_tests:
+  - name: test_match_result_home_win
+    description: "Verifica que home_goals > away_goals gera HOME_WIN"
+    model: stg_matches
+    given:
+      - input: source('raw', 'matches')
+        rows:
+          - {match_id: 'u001', match_date: '2024-01-01', home_team_id: 't1', away_team_id: 't2', home_goals: 3, away_goals: 1, competition_id: 'c1', loaded_at: '2024-01-01 00:00:00'}
+    expect:
+      rows:
+        - {match_id: 'u001', match_result: 'HOME_WIN', total_goals: 4}
+
+  - name: test_match_result_away_win
+    description: "Verifica que away_goals > home_goals gera AWAY_WIN"
+    model: stg_matches
+    given:
+      - input: source('raw', 'matches')
+        rows:
+          - {match_id: 'u002', match_date: '2024-01-02', home_team_id: 't1', away_team_id: 't2', home_goals: 0, away_goals: 2, competition_id: 'c1', loaded_at: '2024-01-02 00:00:00'}
+    expect:
+      rows:
+        - {match_id: 'u002', match_result: 'AWAY_WIN', total_goals: 2}
+
+  - name: test_match_result_draw
+    description: "Verifica que home_goals == away_goals gera DRAW"
+    model: stg_matches
+    given:
+      - input: source('raw', 'matches')
+        rows:
+          - {match_id: 'u003', match_date: '2024-01-03', home_team_id: 't1', away_team_id: 't2', home_goals: 1, away_goals: 1, competition_id: 'c1', loaded_at: '2024-01-03 00:00:00'}
+    expect:
+      rows:
+        - {match_id: 'u003', match_result: 'DRAW', total_goals: 2}
+
+  - name: test_total_goals_calculation
+    description: "Verifica que total_goals = home_goals + away_goals"
+    model: stg_matches
+    given:
+      - input: source('raw', 'matches')
+        rows:
+          - {match_id: 'u004', match_date: '2024-01-04', home_team_id: 't1', away_team_id: 't2', home_goals: 4, away_goals: 3, competition_id: 'c1', loaded_at: '2024-01-04 00:00:00'}
+    expect:
+      rows:
+        - {match_id: 'u004', total_goals: 7}
+
+  - name: test_null_competition_replaced_with_unknown
+    description: "Verifica que competition_id NULL é substituído por UNKNOWN"
+    model: stg_matches
+    given:
+      - input: source('raw', 'matches')
+        rows:
+          - {match_id: 'u005', match_date: '2024-01-05', home_team_id: 't1', away_team_id: 't2', home_goals: 1, away_goals: 0, competition_id: null, loaded_at: '2024-01-05 00:00:00'}
+    expect:
+      rows:
+        - {match_id: 'u005', competition_id: 'UNKNOWN'}

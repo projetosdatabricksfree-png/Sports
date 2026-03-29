@@ -1,0 +1,6 @@
+apache-airflow-providers-postgres==5.13.0
+apache-airflow-providers-apache-spark==4.11.1
+apache-airflow-providers-http==4.14.0
+apache-airflow-providers-common-sql==1.20.0
+dbt-core==1.9.2
+dbt-postgres==1.9.2

@@ -1,0 +1,89 @@
+# =============================================================================
+# dbt Core 1.9.2 — Transformações, testes e docs
+# dbt docs serve: http://localhost:8083
+# Depende de: postgres (dataplatform_net)
+# =============================================================================
+services:
+  dbt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dbt
+    restart: unless-stopped
+    environment:
+      DBT_TARGET: dev
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: dataplatform
+    volumes:
+      - ../../dbt_project:/dbt_project
+      - dbt_logs:/dbt_project/logs
+      - dbt_target:/dbt_project/target
+    depends_on:
+      - postgres
+    networks:
+      - dataplatform_net
+
+  dbt-docs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dbt-docs
+    restart: unless-stopped
+    command: >
+      bash -c "
+        cd /dbt_project &&
+        dbt docs generate --profiles-dir /dbt_project &&
+        dbt docs serve --port 8083 --profiles-dir /dbt_project
+      "
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: dataplatform
+    ports:
+      - "8083:8083"
+    volumes:
+      - ../../dbt_project:/dbt_project
+      - dbt_target:/dbt_project/target
+    depends_on:
+      - postgres
+      - dbt
+    networks:
+      - dataplatform_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: dataplatform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d dataplatform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dataplatform_net
+
+volumes:
+  dbt_logs:
+    driver: local
+  dbt_target:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  dataplatform_net:
+    external: true

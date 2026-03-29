@@ -1,0 +1,30 @@
+version: 2
+
+# =============================================================================
+# Testes Unitários — fct_team_season_stats (dbt 1.9 native unit tests)
+# =============================================================================
+unit_tests:
+  - name: test_win_rate_calculation
+    description: "Verifica cálculo correto de win_rate: 2 vitórias em 4 jogos = 0.5"
+    model: fct_team_season_stats
+    given:
+      - input: ref('int_team_performance')
+        rows:
+          - {team_id: 't1', team_name: 'TeamA', match_id: 'm1', match_date: '2024-01-01', goals_scored: 2, goals_conceded: 1, goal_diff: 1, points: 3, rolling_points_avg: 3.0, rolling_goals_avg: 2.0}
+          - {team_id: 't1', team_name: 'TeamA', match_id: 'm2', match_date: '2024-01-08', goals_scored: 1, goals_conceded: 1, goal_diff: 0, points: 1, rolling_points_avg: 2.0, rolling_goals_avg: 1.5}
+          - {team_id: 't1', team_name: 'TeamA', match_id: 'm3', match_date: '2024-01-15', goals_scored: 0, goals_conceded: 2, goal_diff: -2, points: 0, rolling_points_avg: 1.33, rolling_goals_avg: 1.0}
+          - {team_id: 't1', team_name: 'TeamA', match_id: 'm4', match_date: '2024-01-22', goals_scored: 3, goals_conceded: 0, goal_diff: 3, points: 3, rolling_points_avg: 1.75, rolling_goals_avg: 1.5}
+    expect:
+      rows:
+        - {team_id: 't1', total_matches: 4, wins: 2, draws: 1, losses: 1, win_rate: 0.5, total_points: 7}
+
+  - name: test_zero_matches_excluded
+    description: "Times sem partidas não devem aparecer no fato"
+    model: fct_team_season_stats
+    given:
+      - input: ref('int_team_performance')
+        rows:
+          - {team_id: 't2', team_name: 'TeamB', match_id: 'm5', match_date: '2024-01-01', goals_scored: 1, goals_conceded: 2, goal_diff: -1, points: 0, rolling_points_avg: 0.0, rolling_goals_avg: 1.0}
+    expect:
+      rows:
+        - {team_id: 't2', total_matches: 1}
