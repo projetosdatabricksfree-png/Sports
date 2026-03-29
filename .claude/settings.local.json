@@ -24,5 +24,50 @@
       "Bash(curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /tmp/docker.gpg)",
       "Bash(sudo -S cp /tmp/docker.gpg /etc/apt/keyrings/docker.asc)"
     ]
+  },
+  "mcpServers": {
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://admin:admin@localhost:5432/dataplatform"
+      ],
+      "description": "Database MCP — Consulta schemas, tabelas e dados no PostgreSQL (raw, staging, marts). Use antes de criar ou modificar qualquer modelo dbt."
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/diego/EngenhariaDeDados"
+      ],
+      "description": "Filesystem MCP — Acessa logs do dbt (logs/dbt.log), SQL compilado (target/compiled/), seeds e arquivos do projeto."
+    },
+    "git": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-git",
+        "--repository",
+        "/home/diego/EngenhariaDeDados"
+      ],
+      "description": "Git MCP — Histórico de commits, diffs e blame dos modelos dbt. Use para rastrear o que mudou antes de modificar modelos existentes."
+    },
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "description": "GitHub MCP — Gerencia issues, pull requests e revisões de código no repositório projetosdatabricksfree-png/Sports."
+    }
   }
 }
