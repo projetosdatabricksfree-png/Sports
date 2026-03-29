@@ -1,12 +1,13 @@
 #!/bin/bash
 # =============================================================================
-# Para toda a plataforma de dados (ordem reversa)
+# Football Prediction Platform — Para toda a plataforma (ordem reversa)
 # =============================================================================
 BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$BASE_DIR"
 
 echo "Parando a plataforma..."
 
+docker compose -f docker/mlflow/docker-compose.yml    down
 docker compose -f docker/dbt/docker-compose.yml       down
 docker compose -f docker/dbeaver/docker-compose.yml   down
 docker compose -f docker/superset/docker-compose.yml  down

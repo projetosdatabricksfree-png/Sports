@@ -1,0 +1,174 @@
+version: 2
+
+models:
+  - name: stg_fixtures
+    description: >
+      Partidas de futebol padronizadas a partir de raw.fixtures.
+      Apenas jogos finalizados (FT, AET, PEN). Cast explícito em todas as colunas.
+      Derivações de data e resultado calculadas aqui. Grain: uma linha por partida.
+    columns:
+      - name: fixture_id
+        description: "PK — identificador único da partida."
+        data_tests:
+          - not_null
+          - unique
+      - name: league_id
+        description: "Identificador da liga."
+        data_tests:
+          - not_null
+      - name: season
+        description: "Temporada (ano)."
+        data_tests:
+          - not_null
+      - name: match_date
+        description: "Data e hora da partida (TIMESTAMP)."
+        data_tests:
+          - not_null
+      - name: match_day
+        description: "Data da partida (DATE)."
+        data_tests:
+          - not_null
+      - name: status
+        description: "Status da partida. Apenas FT, AET e PEN passam pelo filtro."
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['FT', 'AET', 'PEN']
+      - name: home_team_id
+        description: "Identificador do time mandante."
+        data_tests:
+          - not_null
+      - name: away_team_id
+        description: "Identificador do time visitante."
+        data_tests:
+          - not_null
+      - name: home_goals
+        description: "Gols do time mandante (coalesce 0)."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: away_goals
+        description: "Gols do time visitante (coalesce 0)."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: match_result
+        description: "Resultado calculado: HOME_WIN | AWAY_WIN | DRAW"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['HOME_WIN', 'AWAY_WIN', 'DRAW']
+      - name: total_goals
+        description: "Total de gols na partida."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 60
+
+  - name: stg_standings
+    description: >
+      Classificações padronizadas a partir de raw.standings.
+      Inclui rank anterior (LAG) e variação de posição. Grain: uma linha por time/liga/temporada/snapshot.
+    columns:
+      - name: standing_id
+        description: "PK — identificador único do registro."
+        data_tests:
+          - not_null
+          - unique
+      - name: league_id
+        description: "Identificador da liga."
+        data_tests:
+          - not_null
+      - name: season
+        description: "Temporada."
+        data_tests:
+          - not_null
+      - name: team_id
+        description: "Identificador do time."
+        data_tests:
+          - not_null
+      - name: rank
+        description: "Posição atual na tabela."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 30
+      - name: points
+        description: "Pontos acumulados."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  - name: stg_teams_football
+    description: >
+      Times de futebol padronizados a partir de raw.teams_football.
+      Grain: uma linha por time.
+    columns:
+      - name: team_id
+        description: "PK — identificador único do time."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_name
+        description: "Nome oficial do time."
+        data_tests:
+          - not_null
+      - name: country
+        description: "País do time."
+      - name: is_national
+        description: "Indica se é seleção nacional."
+        data_tests:
+          - not_null
+
+  - name: stg_odds
+    description: >
+      Odds de apostas com probabilidades implícitas normalizadas.
+      A normalização remove a margem do bookmaker (overround).
+      Grain: uma linha por fixture_id por bookmaker por mercado.
+    columns:
+      - name: odds_id
+        description: "PK — identificador único do registro."
+        data_tests:
+          - not_null
+          - unique
+      - name: fixture_id
+        description: "FK para stg_fixtures."
+        data_tests:
+          - not_null
+      - name: bookmaker_name
+        data_tests:
+          - not_null
+      - name: odd_home
+        description: "Odd decimal para vitória do mandante."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.01
+      - name: implied_prob_home
+        description: "Probabilidade implícita normalizada para vitória do mandante."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: implied_prob_draw
+        description: "Probabilidade implícita normalizada para empate."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: implied_prob_away
+        description: "Probabilidade implícita normalizada para vitória do visitante."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1

@@ -1,0 +1,89 @@
+version: 2
+
+sources:
+  - name: football_raw
+    description: "Dados brutos de futebol ingeridos via API Football — schema raw no PostgreSQL."
+    database: dataplatform
+    schema: raw
+    freshness:
+      warn_after: {count: 12, period: hour}
+      error_after: {count: 24, period: hour}
+
+    tables:
+      - name: fixtures
+        description: "Partidas brutas da API. Grain: uma linha por partida (fixture)."
+        loaded_at_field: loaded_at
+        columns:
+          - name: fixture_id
+            description: "Identificador único da partida."
+            data_tests:
+              - not_null
+              - unique
+          - name: league_id
+            description: "Identificador da liga."
+            data_tests:
+              - not_null
+          - name: match_date
+            description: "Data e hora da partida."
+            data_tests:
+              - not_null
+          - name: home_team_id
+            data_tests:
+              - not_null
+          - name: away_team_id
+            data_tests:
+              - not_null
+          - name: status
+            description: "Status da partida (FT, NS, LIVE, etc.)."
+            data_tests:
+              - not_null
+
+      - name: standings
+        description: "Classificações brutas por liga e temporada. Grain: uma linha por time por liga por temporada."
+        loaded_at_field: loaded_at
+        columns:
+          - name: standing_id
+            description: "Identificador único do registro de classificação."
+            data_tests:
+              - not_null
+              - unique
+          - name: league_id
+            data_tests:
+              - not_null
+          - name: season
+            data_tests:
+              - not_null
+          - name: team_id
+            data_tests:
+              - not_null
+
+      - name: teams_football
+        description: "Cadastro de times de futebol. Grain: uma linha por time."
+        loaded_at_field: updated_at
+        columns:
+          - name: team_id
+            description: "Identificador único do time."
+            data_tests:
+              - not_null
+              - unique
+          - name: team_name
+            description: "Nome oficial do time."
+            data_tests:
+              - not_null
+
+      - name: odds
+        description: "Odds de apostas por partida e mercado. Grain: uma linha por fixture_id por bookmaker por mercado."
+        loaded_at_field: loaded_at
+        columns:
+          - name: odds_id
+            description: "Identificador único do registro de odds."
+            data_tests:
+              - not_null
+              - unique
+          - name: fixture_id
+            description: "Referência à partida."
+            data_tests:
+              - not_null
+          - name: bookmaker_name
+            data_tests:
+              - not_null

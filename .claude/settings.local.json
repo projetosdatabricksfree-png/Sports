@@ -3,6 +3,9 @@
     "allow": [
       "Bash(docker --version)",
       "Bash(docker-compose --version)",
+      "Bash(docker compose*)",
+      "Bash(docker exec*)",
+      "Bash(docker logs*)",
       "Bash(dpkg -l)",
       "Bash(snap list:*)",
       "Bash(lsb_release -a)",
@@ -26,48 +29,103 @@
     ]
   },
   "mcpServers": {
+    "airflow": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["astro-airflow-mcp", "--transport", "stdio"],
+      "env": {
+        "AIRFLOW_API_URL": "http://localhost:8080",
+        "AIRFLOW_USERNAME": "admin",
+        "AIRFLOW_PASSWORD": "admin"
+      },
+      "description": "Airflow MCP — Gerencia DAGs do football_prediction_pipeline. Use para: triggerar ingestão, monitorar tasks, diagnosticar falhas, verificar status do pipeline completo."
+    },
     "postgres": {
       "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-postgres",
-        "postgresql://admin:admin@localhost:5432/dataplatform"
-      ],
-      "description": "Database MCP — Consulta schemas, tabelas e dados no PostgreSQL (raw, staging, marts). Use antes de criar ou modificar qualquer modelo dbt."
+      "command": "uvx",
+      "args": ["postgres-mcp"],
+      "env": {
+        "DATABASE_URL": "postgresql://admin:admin@localhost:5432/dataplatform"
+      },
+      "description": "PostgreSQL MCP Pro — Inspeciona schemas raw/staging/marts, valida dados antes de criar modelos dbt, queries nas tabelas fixtures/standings/odds/predictions. Inclui explain plans e tuning de índices."
     },
-    "filesystem": {
+    "dbt": {
       "type": "stdio",
-      "command": "npx",
+      "command": "uvx",
+      "args": ["dbt-mcp"],
+      "env": {
+        "DBT_PROJECT_DIR": "/home/diego/EngenhariaDeDados/dbt_project",
+        "DBT_PROFILES_DIR": "/home/diego/EngenhariaDeDados/dbt_project"
+      },
+      "description": "dbt MCP Oficial (dbt Labs) — Executa build/test/run, gera YAML de modelos, explora lineage. Use para gestão completa das camadas staging/intermediate/marts do projeto football."
+    },
+    "mlflow": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mlflow-mcp"],
+      "env": {
+        "MLFLOW_TRACKING_URI": "http://localhost:5000"
+      },
+      "description": "MLflow MCP — Gerencia ciclo de vida dos modelos Poisson, Gradient Boosting e Hybrid. Use para: comparar experimentos, promover modelo campeão, consultar métricas (accuracy, log_loss, brier_score), histórico de runs."
+    },
+    "docker": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-docker"],
+      "env": {
+        "DOCKER_HOST": "unix:///var/run/docker.sock"
+      },
+      "description": "Docker MCP — Gerencia todos os containers da plataforma (postgres, airflow, spark, superset, dbt, mlflow). Use para: verificar health, reiniciar serviços, inspecionar logs, gerenciar compose stacks."
+    },
+    "superset": {
+      "type": "stdio",
+      "command": "docker",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/home/diego/EngenhariaDeDados"
+        "run", "-i", "--rm",
+        "-e", "SUPERSET_API_URL",
+        "-e", "SUPERSET_USERNAME",
+        "-e", "SUPERSET_PASSWORD",
+        "ponderedw/superset-mcp:latest"
       ],
-      "description": "Filesystem MCP — Acessa logs do dbt (logs/dbt.log), SQL compilado (target/compiled/), seeds e arquivos do projeto."
+      "env": {
+        "SUPERSET_API_URL": "http://localhost:8088",
+        "SUPERSET_USERNAME": "admin",
+        "SUPERSET_PASSWORD": "admin"
+      },
+      "description": "Superset MCP — Gerencia dashboards de probabilidades (Win/Draw/Loss), ranking de times, value bets e ROI histórico. Use para: criar/atualizar charts, refresh de datasets, explorar metadados via linguagem natural."
     },
     "git": {
       "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-git",
-        "--repository",
-        "/home/diego/EngenhariaDeDados"
-      ],
-      "description": "Git MCP — Histórico de commits, diffs e blame dos modelos dbt. Use para rastrear o que mudou antes de modificar modelos existentes."
+      "command": "uvx",
+      "args": ["mcp-server-git", "--repository", "/home/diego/EngenhariaDeDados"],
+      "description": "Git MCP — Histórico de commits, diffs e blame dos modelos dbt e scripts ML. Use antes de modificar qualquer modelo existente para rastrear o que mudou."
     },
     "github": {
       "type": "stdio",
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-github"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-github"],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
       },
-      "description": "GitHub MCP — Gerencia issues, pull requests e revisões de código no repositório projetosdatabricksfree-png/Sports."
+      "description": "GitHub MCP — Issues, Pull Requests e code search no repo projetosdatabricksfree-png/Sports. Use para: abrir PRs de feature/* → develop → main, registrar bugs, revisar código."
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/diego/EngenhariaDeDados"],
+      "description": "Filesystem MCP — Acessa logs do dbt (logs/dbt.log), SQL compilado (target/compiled/), scripts de ingestão e modelos ML. Use para debug de falhas no pipeline."
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "description": "Fetch MCP — Busca e converte conteúdo web para uso eficiente. Use para: consultar documentação da API-Football, verificar endpoints disponíveis, inspecionar respostas de APIs externas."
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "description": "Sequential Thinking MCP — Raciocínio dinâmico para resolução de problemas complexos. Use para: debugging de pipelines com múltiplos componentes, análise de resultados de modelos ML, diagnóstico de falhas em cascata."
     }
   }
 }
