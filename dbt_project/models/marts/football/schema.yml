@@ -1,0 +1,284 @@
+version: 2
+
+models:
+  - name: dim_league
+    description: >
+      Dimensão de ligas de futebol. Consolidada a partir de fixtures e standings.
+      Inclui classificação do tipo (DOMESTIC_LEAGUE, CUP, INTERNATIONAL) e
+      estatísticas históricas de gols e resultados. Grain: uma linha por liga.
+    columns:
+      - name: league_id
+        description: "PK — identificador único da liga."
+        data_tests:
+          - not_null
+          - unique
+      - name: league_name
+        description: "Nome oficial da liga."
+        data_tests:
+          - not_null
+      - name: league_type
+        description: "Tipo da liga: DOMESTIC_LEAGUE | CUP | INTERNATIONAL"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['DOMESTIC_LEAGUE', 'CUP', 'INTERNATIONAL']
+      - name: total_seasons
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: total_matches
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  - name: dim_team_football
+    description: >
+      Dimensão de times de futebol com surrogate key gerada por dbt_utils.
+      Inclui informações do venue e estatísticas de participação.
+      Grain: uma linha por time.
+    columns:
+      - name: team_sk
+        description: "SK — surrogate key do time (hash de team_id)."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_id
+        description: "NK — identificador natural do time."
+        data_tests:
+          - not_null
+          - unique
+      - name: team_name
+        description: "Nome oficial do time."
+        data_tests:
+          - not_null
+      - name: is_national
+        description: "Indica se é seleção nacional."
+        data_tests:
+          - not_null
+      - name: total_matches
+        description: "Total de partidas disputadas (home + away)."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+
+  - name: fct_standings
+    description: >
+      Tabela de classificação atual por liga e temporada.
+      Contém o snapshot mais recente de cada time por liga/temporada,
+      enriquecido com surrogate keys e estatísticas por jogo.
+      Grain: uma linha por time por liga por temporada.
+    columns:
+      - name: standing_sk
+        description: "SK — surrogate key composta de league_id + season + team_id."
+        data_tests:
+          - not_null
+          - unique
+      - name: league_id
+        data_tests:
+          - not_null
+      - name: season
+        data_tests:
+          - not_null
+      - name: team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team_football')
+              field: team_id
+      - name: league_id
+        data_tests:
+          - relationships:
+              to: ref('dim_league')
+              field: league_id
+      - name: rank
+        description: "Posição atual na classificação."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 30
+      - name: points
+        description: "Pontos acumulados na temporada."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      - name: win_rate
+        description: "Taxa de vitórias (0 a 1)."
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: rank_movement
+        description: "Direção da variação de posição: UP | DOWN | SAME"
+        data_tests:
+          - accepted_values:
+              values: ['UP', 'DOWN', 'SAME']
+
+  - name: fct_match_features
+    description: >
+      Tabela de features para modelos de ML. Materializada como table para
+      performance de leitura. Combina todos os dados de int_match_features
+      com surrogate keys das dimensões. Grain: uma linha por partida finalizada.
+    columns:
+      - name: fixture_id
+        description: "PK — identificador único da partida."
+        data_tests:
+          - not_null
+          - unique
+      - name: league_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_league')
+              field: league_id
+      - name: home_team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team_football')
+              field: team_id
+      - name: away_team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team_football')
+              field: team_id
+      - name: match_result
+        description: "Variável alvo: HOME_WIN | DRAW | AWAY_WIN"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['HOME_WIN', 'DRAW', 'AWAY_WIN']
+      - name: match_result_encoded
+        description: "Encoding numérico: HOME_WIN=0, DRAW=1, AWAY_WIN=2"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1, 2]
+      - name: home_goals
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: away_goals
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+      - name: home_win_rate_l5
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: away_win_rate_l5
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: home_win_rate_l10
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: away_win_rate_l10
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: odds_implied_prob_home
+        description: "Probabilidade implícita normalizada do mercado (home)."
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+
+  - name: fct_predictions
+    description: >
+      Previsões de resultados geradas pelo pipeline Python de ML.
+      Incremental por predicted_at com merge por fixture_id.
+      Contém probabilidades dos modelos Poisson, Gradient Boosting e Híbrido,
+      além de resultado previsto, confiança e comparação com resultado real.
+      Grain: uma linha por partida prevista.
+    columns:
+      - name: fixture_id
+        description: "PK — identificador único da partida."
+        data_tests:
+          - not_null
+          - unique
+      - name: league_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_league')
+              field: league_id
+      - name: home_team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team_football')
+              field: team_id
+      - name: away_team_id
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_team_football')
+              field: team_id
+      - name: predicted_result
+        description: "Resultado previsto pelo modelo híbrido: HOME_WIN | DRAW | AWAY_WIN"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['HOME_WIN', 'DRAW', 'AWAY_WIN']
+      - name: confidence_score
+        description: "Score de confiança do modelo (0 a 1)."
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: poisson_home_prob
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: poisson_draw_prob
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: poisson_away_prob
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: hybrid_home_prob
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: hybrid_draw_prob
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: hybrid_away_prob
+        data_tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1
+      - name: model_version
+        description: "Versão do modelo que gerou a previsão."
+        data_tests:
+          - not_null
